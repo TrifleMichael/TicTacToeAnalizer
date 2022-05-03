@@ -1,4 +1,3 @@
-# Import dependencies
 import random
 
 import numpy as np
@@ -7,20 +6,33 @@ from random import uniform
 
 # Hopfield networks can hold about 0.138 \* n_neurons for better denoising <br>
 # 0.138 \* n_neurons = 0.138 \* 25 = 3.45 ~ 3 <br>
-# now 1 :)
-n_train = 1
+n_train = 3
 n_test = 100
 
 # no of images to show in output plot
 n_train_disp = 8
 
 # Size of image(width)
-n_side = 3
+n_side = 5
 
 # No of neurons
 n_neurons = n_side * n_side
 
-perfect_data = [[1, -1, 1, -1, 1, -1, 1, -1, 1], [1, 1, 1, 1, -1, 1, 1, 1, 1], [-1, -1, -1, -1, -1, -1, -1, -1, -1]]
+perfect_data = [
+    [1, -1, -1, -1, 1,
+     -1, 1, -1, 1, -1,
+     -1, -1, 1, -1, -1,
+     -1, 1, -1, 1, -1,
+     1, -1, -1, -1, 1],
+
+    [1, 1, 1, 1, 1,
+     1, -1, -1, -1, 1,
+     1, -1, -1, -1, 1,
+     1, -1, -1, -1, 1,
+     1, 1, 1, 1, 1],
+
+    [-1 for i in range(25)]
+]
 
 
 def distort(arr, distortionPercent, maxDistortions=9):
@@ -28,7 +40,7 @@ def distort(arr, distortionPercent, maxDistortions=9):
     distortions = 0
     for i in range(len(output)):
         if random.uniform(0, 1) <= distortionPercent:
-            output[i] = 1 - output[i]
+            output[i] *= -1
             distortions += 1
         if distortions >= maxDistortions:
             break
@@ -80,7 +92,7 @@ def retrieve_pattern(weights, data, steps=10):
 def plot_images(images, title, no_i_x, no_i_y=3):
     fig = plt.figure(figsize=(10, 15))
     fig.canvas.set_window_title(title)
-    images = np.array(images).reshape(-1, 3, 3)
+    images = np.array(images).reshape(-1, 5, 5)
     images = np.pad(
         images, ((0, 0), (1, 1), (1, 1)), 'constant', constant_values=-1)
     for i in range(no_i_x):
@@ -104,7 +116,7 @@ def plot_images(images, title, no_i_x, no_i_y=3):
 train_data = [np.array(d) for d in perfect_data][:n_train]
 W = train(n_neurons, train_data)
 # Test
-test_data = [[data, distort(data, 0.2, 3)] for data in perfect_data]
+test_data = [[data, distort(data, 0.10, 25)] for data in perfect_data]
 accuracy, op_imgs = test(W, test_data)
 
 # Print accuracy
