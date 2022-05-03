@@ -1,24 +1,18 @@
 import random
-
 import numpy as np
 import matplotlib.pyplot as plt
-from random import uniform
 
 # Hopfield networks can hold about 0.138 \* n_neurons for better denoising <br>
 # 0.138 \* n_neurons = 0.138 \* 25 = 3.45 ~ 3 <br>
-n_train = 3
-n_test = 100
+n_train = 3  # maybe more training better - Michal?
+n_test = 100 
 
 # no of images to show in output plot
 n_train_disp = 8
+pixel_num = 25
+retrieve_steps = 10
 
-# Size of image(width)
-n_side = 5
-
-# No of neurons
-n_neurons = n_side * n_side
-
-perfect_data = [
+original_images = [
     [1, -1, -1, -1, 1,
      -1, 1, -1, 1, -1,
      -1, -1, 1, -1, -1,
@@ -48,25 +42,23 @@ def distort(arr, distortionPercent, maxDistortions=9):
 
 
 # Function to train the network using Hebbian learning rule
-def train(neu, training_data):
-    w = np.zeros([neu, neu])
+def train(training_data, neuron_num):
+    weights = np.zeros([neuron_num, neuron_num])
     for data in training_data:
-        w += np.outer(data, data)
-    for diag in range(neu):
-        w[diag][diag] = 0
-    return w
+        weights += np.outer(data, data)
+    for diag in range(neuron_num):
+        weights[diag][diag] = 0
+    return weights
 
 
 # Function to test the network
 def test(weights, testing_data):
     success = 0.0
-
     output_data = []
-
     for data in testing_data:
         true_data = data[0]
         noisy_data = data[1]
-        predicted_data = retrieve_pattern(weights, noisy_data)
+        predicted_data = predict_result(weights, noisy_data)
         if np.array_equal(true_data, predicted_data):
             success += 1.0
         output_data.append([true_data, noisy_data, predicted_data])
@@ -75,17 +67,16 @@ def test(weights, testing_data):
 
 
 # Function to retrieve individual noisy patterns
-def retrieve_pattern(weights, data, steps=10):
-    res = np.array(data)
-
-    for _ in range(steps):
-        for i in range(len(res)):
-            raw_v = np.dot(weights[i], res)
-            if raw_v > 0:
-                res[i] = 1
+def predict_result(weights, data):
+    result = np.array(data)
+    for i in range(retrieve_steps):
+        for j in range(len(result)):
+            pixelVal = np.dot(weights[j], result)
+            if pixelVal > 0:
+                result[j] = 1
             else:
-                res[i] = -1
-    return res
+                result[j] = -1
+    return result
 
 
 # function to plot the images after during testing phase
@@ -113,11 +104,11 @@ def plot_images(images, title, no_i_x, no_i_y=3):
 
 
 # Train
-train_data = [np.array(d) for d in perfect_data][:n_train]
-W = train(n_neurons, train_data)
+training_data = [np.array(d) for d in original_images][:n_train]
+weights = train(training_data, pixel_num)
 # Test
-test_data = [[data, distort(data, 0.10, 25)] for data in perfect_data]
-accuracy, op_imgs = test(W, test_data)
+test_data = [[data, distort(data, 0.10, 25)] for data in original_images]
+accuracy, op_imgs = test(weights, test_data)
 
 # Print accuracy
 print("Accuracy of the network is %f" % (accuracy * 100))
