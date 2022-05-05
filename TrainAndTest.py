@@ -1,31 +1,39 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 
 # Hopfield networks can hold about 0.138 \* n_neurons for better denoising <br>
 # 0.138 \* n_neurons = 0.138 \* 25 = 3.45 ~ 3 <br>
 n_train = 3  # maybe more training better - Michal?
-n_test = 100 
+n_test = 100
 
 # no of images to show in output plot
 n_train_disp = 8
-pixel_num = 25
 retrieve_steps = 10
+square_size = 7
+
+pixel_num = square_size * square_size
+board_size = 3 * square_size + 2
 
 original_images = [
-    [1, -1, -1, -1, 1,
-     -1, 1, -1, 1, -1,
-     -1, -1, 1, -1, -1,
-     -1, 1, -1, 1, -1,
-     1, -1, -1, -1, 1],
+    [-1, -1, -1, -1, -1, -1, -1,
+     -1, 1, -1, -1, -1, 1, -1,
+     -1, -1, 1, -1, 1, -1, -1,
+     -1, -1, -1, 1, -1, -1, -1,
+     -1, -1, 1, -1, 1, -1, -1,
+     -1, 1, -1, -1, -1, 1, -1,
+     -1, -1, -1, -1, -1, -1, -1],
 
-    [1, 1, 1, 1, 1,
-     1, -1, -1, -1, 1,
-     1, -1, -1, -1, 1,
-     1, -1, -1, -1, 1,
-     1, 1, 1, 1, 1],
+    [-1, -1, -1, -1, -1, -1, -1,
+     -1, 1, 1, 1, 1, 1, -1,
+     -1, 1, -1, -1, -1, 1, -1,
+     -1, 1, -1, -1, -1, 1, -1,
+     -1, 1, -1, -1, -1, 1, -1,
+     -1, 1, 1, 1, 1, 1, -1,
+     -1, -1, -1, -1, -1, -1, -1, ],
 
-    [-1 for i in range(25)]
+    [-1 for i in range(49)]
 ]
 
 
@@ -102,10 +110,80 @@ def plot_images(images, title, no_i_x, no_i_y=3):
             elif j == 0 and i == 2:
                 ax.set_title("Reconstructed")
 
+#loads board from file
+def load_board(path):
+    board = np.array(Image.open(path).convert("L"))
+    board = (((board // 255) - 0.5) * 2)
+    return board
+
+#predicts result for each square on board
+def predict_board_result(board, original_images, weights):
+    new_board = board.copy()
+
+    board_results = [[-1 for _ in range(3)] for _ in range(3)]
+
+    for i in range(0, board_size, square_size + 1):
+        for j in range(0, board_size, square_size + 1):
+            linearized_data = []
+            for row in board[i:i + square_size, j:j + square_size]:
+                for k in range(len(row)):
+                    linearized_data.append(row[k])
+            linearized_prediction = predict_result(weights, linearized_data)
+            true_prediction = [[] for _ in range(square_size)]
+            for k in range(0, square_size * square_size, square_size):
+                true_prediction[k // square_size] = linearized_prediction[k:k + square_size]
+            true_prediction = np.array(true_prediction)
+
+            for symbol in range(len(original_images)):
+                if np.array_equal(linearized_prediction, original_images[symbol]):
+                    board_results[i // square_size][j // square_size] = symbol
+
+            new_board[i:i + square_size, j:j + square_size] = true_prediction
+
+    return new_board, board_results
+
+def get_winner(board):
+    winner = [False, False]
+
+    for symbol in range(1, 3):
+        for row in board:
+            if row[0] == row[1] == row[2] == symbol:
+                winner[symbol] = True
+
+        for col in range(3):
+            if board[0][col] == board[1][col] == board[2][col] == symbol:
+                winner[symbol] = True
+
+        if board[0][0] == board[1][1] == board[2][2] == symbol:
+            winner[symbol] = True
+
+        if board[2][0] == board[1][1] == board[0][2] == symbol:
+            winner[symbol] = True
+
+    if not winner[0] and not winner[1]:
+        return "None"
+    if winner[0] and not winner[1]:
+        return "Cross"
+    if not winner[0] and winner[1]:
+        return "Circle"
+    if winner[0] and winner[1]:
+        return "Both"
+
 
 # Train
 training_data = [np.array(d) for d in original_images][:n_train]
 weights = train(training_data, pixel_num)
+
+board = load_board("board.png")
+new_board, board_results = predict_board_result(board, original_images, weights)
+
+fig, axs = plt.subplots(1, 2)
+axs[0].imshow(board)
+axs[1].imshow(new_board)
+axs[1].set_title("Winner: " + get_winner(board_results))
+plt.show()
+
+"""
 # Test
 test_data = [[data, distort(data, 0.10, 25)] for data in original_images]
 accuracy, op_imgs = test(weights, test_data)
@@ -116,3 +194,4 @@ print("Accuracy of the network is %f" % (accuracy * 100))
 # Plot test result
 plot_images(op_imgs, "Reconstructed Data", n_train_disp)
 plt.show()
+"""
