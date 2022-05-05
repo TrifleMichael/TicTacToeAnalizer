@@ -5,7 +5,7 @@ from PIL import Image
 
 # Hopfield networks can hold about 0.138 \* n_neurons for better denoising <br>
 # 0.138 \* n_neurons = 0.138 \* 25 = 3.45 ~ 3 <br>
-n_train = 3  # maybe more training better - Michal?
+n_train = 7  # maybe more training better - Michal?
 n_test = 100
 
 # no of images to show in output plot
