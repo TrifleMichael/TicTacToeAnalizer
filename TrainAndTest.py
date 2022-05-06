@@ -5,7 +5,7 @@ from PIL import Image
 import picGenerator
 # Hopfield networks can hold about 0.138 \* n_neurons for better denoising <br>
 # 0.138 \* n_neurons = 0.138 \* 25 = 3.45 ~ 3 <br>
-square_size = 10
+square_size = 15
 # n_train = 7  # maybe more training better - Michal?
 n_test = 100
 
@@ -14,10 +14,10 @@ n_train_disp = 8
 retrieve_steps = 10
 
 b = picGenerator.construct_board(square_size, broken=True, temp=[
-    ['o','_','_'],
+    ['o','_','x'],
     ['_','o','x'],
     ['_','x','o']
-])
+], alpha=0.3) #alpha <- [-1,1]
 picGenerator.save_image("./board_test.png", np.array(list(map(lambda x: ((1+x)//2*255, (1+x)//2*255, (1+x)//2*255), b)),
                                                      dtype="i,i,i").astype(object).reshape((3*square_size+2,
                                                                                             3*square_size+2)))
@@ -161,7 +161,7 @@ def predict_board_result(board, original_images, weights):
 def get_winner(board):
     winner = [False, False]
 
-    for symbol in range(1, 3):
+    for symbol in range(0, 3):
         for row in board:
             if row[0] == row[1] == row[2] == symbol:
                 winner[symbol] = True
