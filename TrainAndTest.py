@@ -12,39 +12,19 @@ n_test = 100
 # no of images to show in output plot
 n_train_disp = 8
 retrieve_steps = 10
-
-b = picGenerator.construct_board(square_size, broken=True, temp=[
-    ['o','_','x'],
-    ['_','o','x'],
-    ['_','x','o']
-], alpha=0.3) #alpha <- [-1,1]
-picGenerator.save_image("./board_test.png", np.array(list(map(lambda x: ((1+x)//2*255, (1+x)//2*255, (1+x)//2*255), b)),
-                                                     dtype="i,i,i").astype(object).reshape((3*square_size+2,
-                                                                                            3*square_size+2)))
+# template = [
+#     ['o','_','x'],
+#     ['_','o','x'],
+#     ['_','x','o']
+# ]
+# b = picGenerator.construct_board(square_size, broken=True, temp=template, alpha=0.3) #alpha <- [-1,1]
+# picGenerator.save_image("./board_test.png", np.array(list(map(lambda x: ((1+x)//2*255, (1+x)//2*255, (1+x)//2*255), b)),
+#                                                      dtype="i,i,i").astype(object).reshape((3*square_size+2,
+#                                                                                             3*square_size+2)))
 
 pixel_num = square_size * square_size
 board_size = 3 * square_size + 2
 n_train = int(board_size*board_size*0.138)
-
-# original_images = [
-#     [-1, -1, -1, -1, -1, -1, -1,
-#      -1, 1, -1, -1, -1, 1, -1,
-#      -1, -1, 1, -1, 1, -1, -1,
-#      -1, -1, -1, 1, -1, -1, -1,
-#      -1, -1, 1, -1, 1, -1, -1,
-#      -1, 1, -1, -1, -1, 1, -1,
-#      -1, -1, -1, -1, -1, -1, -1],
-#
-#     [-1, -1, -1, -1, -1, -1, -1,
-#      -1, 1, 1, 1, 1, 1, -1,
-#      -1, 1, -1, -1, -1, 1, -1,
-#      -1, 1, -1, -1, -1, 1, -1,
-#      -1, 1, -1, -1, -1, 1, -1,
-#      -1, 1, 1, 1, 1, 1, -1,
-#      -1, -1, -1, -1, -1, -1, -1, ],
-#
-#     [-1 for i in range(49)]
-# ]
 
 original_images = [
     picGenerator.generate_x(square_size),
@@ -160,8 +140,7 @@ def predict_board_result(board, original_images, weights):
 
 def get_winner(board):
     winner = [False, False]
-
-    for symbol in range(0, 3):
+    for symbol in range(0, 2):
         for row in board:
             if row[0] == row[1] == row[2] == symbol:
                 winner[symbol] = True
@@ -186,18 +165,54 @@ def get_winner(board):
         return "Both"
 
 
+def check_with_temp(template, board):
+    d = {'x': 0, 'o': 1, '_': 2}
+    return board == list(map(lambda row: list(map(lambda x: d[x], row)), template))
+
+
+def generate_temp():
+    return [[('x', 'o', '_')[random.randint(0, 2)] for _ in range(3)] for _ in range(3)]
+
+
+def test_predicted_result():
+    # template = [
+    #     ['o', '_', 'x'],
+    #     ['_', 'o', 'x'],
+    #     ['_', 'x', 'o']
+    # ]
+    template = generate_temp()
+    b = picGenerator.construct_board(square_size, broken=True, temp=template, alpha=0.3)  # alpha <- [-1,1]
+    picGenerator.save_image("./board_test.png", np.array(
+        list(map(lambda x: ((1 + x) // 2 * 255, (1 + x) // 2 * 255, (1 + x) // 2 * 255), b)),
+        dtype="i,i,i").astype(object).reshape((3 * square_size + 2,
+                                               3 * square_size + 2)))
+    board = load_board("./board_test.png")
+    new_board, board_results = predict_board_result(board, original_images, weights)
+    fig, axs = plt.subplots(1, 2)
+    axs[0].imshow(board)
+    axs[1].imshow(new_board)
+    axs[1].set_title("Winner: " + get_winner(board_results))
+    plt.show()
+    plt.close()
+    return check_with_temp(template, board_results)
+
+
+
 # Train
 training_data = [np.array(d) for d in original_images][:n_train]
 weights = train(training_data, pixel_num)
+test_num = 30
+print(f"accuracy: {sum(test_predicted_result() for _ in range(test_num))/test_num*100}%")
 
-board = load_board("./board_test.png")
-new_board, board_results = predict_board_result(board, original_images, weights)
-
-fig, axs = plt.subplots(1, 2)
-axs[0].imshow(board)
-axs[1].imshow(new_board)
-axs[1].set_title("Winner: " + get_winner(board_results))
-plt.show()
+# board = load_board("./board_test.png")
+# new_board, board_results = predict_board_result(board, original_images, weights)
+#
+# fig, axs = plt.subplots(1, 2)
+# axs[0].imshow(board)
+# axs[1].imshow(new_board)
+# axs[1].set_title("Winner: " + get_winner(board_results))
+# plt.show()
+# print(check_with_temp(template, board_results))
 
 """
 # Test
