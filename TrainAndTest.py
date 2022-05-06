@@ -5,7 +5,7 @@ from PIL import Image
 import picGenerator
 # Hopfield networks can hold about 0.138 \* n_neurons for better denoising <br>
 # 0.138 \* n_neurons = 0.138 \* 25 = 3.45 ~ 3 <br>
-square_size = 7
+square_size = 10
 # n_train = 7  # maybe more training better - Michal?
 n_test = 100
 
@@ -13,7 +13,7 @@ n_test = 100
 n_train_disp = 8
 retrieve_steps = 10
 
-b = picGenerator.construct_board(square_size, broken=True, temp=[
+b = picGenerator.construct_board(square_size, broken=False, temp=[
     ['o','_','_'],
     ['_','o','x'],
     ['_','x','o']

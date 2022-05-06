@@ -4,18 +4,24 @@ import numpy as np
 
 
 def generate_x(n):
-    offset = max(1, n//5)
+    offset = 1 # max(1, n//5)
     x = [-1]*n*n
     for i in range(n):
         if offset <= i <= n-1-offset:
             x[i*n+i] = 1
             x[(n-1-i)*n+i] = 1
+            if i != n-1-offset:
+                x[(i + 1) * n + i] = 1
+                x[i * n + i + 1] = 1
+            if i != offset:
+                x[(n - i) * n + i] = 1
+                x[(n - 1 - i) * n + i - 1] = 1
     return x
 
 
 def generate_o(n):
     o = [-1]*n*n
-    offset = max(1, n//5)
+    offset = 1 # max(1, n//5)
     for i in range(offset, n-offset):
         o[i*n+offset] = 1
         o[i*n+n-offset-1] = 1
@@ -66,7 +72,7 @@ def save_image(filename, image):
 
 
 n = 21
-b = construct_board(n)
+b = construct_board(n, broken=False)
 
 save_image("./x.png", np.array(list(map(lambda x: ((1+x)//2*255, (1+x)//2*255, (1+x)//2*255), generate_x(n))), dtype="i,i,i").astype(object).reshape((n, n)))
 save_image("./o.png", np.array(list(map(lambda x: ((1+x)//2*255, (1+x)//2*255, (1+x)//2*255), generate_o(n))), dtype="i,i,i").astype(object).reshape((n, n)))
