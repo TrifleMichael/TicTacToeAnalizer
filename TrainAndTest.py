@@ -13,7 +13,7 @@ n_test = 100
 n_train_disp = 8
 retrieve_steps = 10
 
-b = picGenerator.construct_board(square_size, broken=False, temp=[
+b = picGenerator.construct_board(square_size, broken=True, temp=[
     ['o','_','_'],
     ['_','o','x'],
     ['_','x','o']
