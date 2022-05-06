@@ -2,38 +2,54 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-
+import picGenerator
 # Hopfield networks can hold about 0.138 \* n_neurons for better denoising <br>
 # 0.138 \* n_neurons = 0.138 \* 25 = 3.45 ~ 3 <br>
-n_train = 7  # maybe more training better - Michal?
+square_size = 7
+# n_train = 7  # maybe more training better - Michal?
 n_test = 100
 
 # no of images to show in output plot
 n_train_disp = 8
 retrieve_steps = 10
-square_size = 7
+
+b = picGenerator.construct_board(square_size, broken=True, temp=[
+    ['o','_','_'],
+    ['_','o','x'],
+    ['_','x','o']
+])
+picGenerator.save_image("./board_test.png", np.array(list(map(lambda x: ((1+x)//2*255, (1+x)//2*255, (1+x)//2*255), b)),
+                                                     dtype="i,i,i").astype(object).reshape((3*square_size+2,
+                                                                                            3*square_size+2)))
 
 pixel_num = square_size * square_size
 board_size = 3 * square_size + 2
+n_train = int(board_size*board_size*0.138)
+
+# original_images = [
+#     [-1, -1, -1, -1, -1, -1, -1,
+#      -1, 1, -1, -1, -1, 1, -1,
+#      -1, -1, 1, -1, 1, -1, -1,
+#      -1, -1, -1, 1, -1, -1, -1,
+#      -1, -1, 1, -1, 1, -1, -1,
+#      -1, 1, -1, -1, -1, 1, -1,
+#      -1, -1, -1, -1, -1, -1, -1],
+#
+#     [-1, -1, -1, -1, -1, -1, -1,
+#      -1, 1, 1, 1, 1, 1, -1,
+#      -1, 1, -1, -1, -1, 1, -1,
+#      -1, 1, -1, -1, -1, 1, -1,
+#      -1, 1, -1, -1, -1, 1, -1,
+#      -1, 1, 1, 1, 1, 1, -1,
+#      -1, -1, -1, -1, -1, -1, -1, ],
+#
+#     [-1 for i in range(49)]
+# ]
 
 original_images = [
-    [-1, -1, -1, -1, -1, -1, -1,
-     -1, 1, -1, -1, -1, 1, -1,
-     -1, -1, 1, -1, 1, -1, -1,
-     -1, -1, -1, 1, -1, -1, -1,
-     -1, -1, 1, -1, 1, -1, -1,
-     -1, 1, -1, -1, -1, 1, -1,
-     -1, -1, -1, -1, -1, -1, -1],
-
-    [-1, -1, -1, -1, -1, -1, -1,
-     -1, 1, 1, 1, 1, 1, -1,
-     -1, 1, -1, -1, -1, 1, -1,
-     -1, 1, -1, -1, -1, 1, -1,
-     -1, 1, -1, -1, -1, 1, -1,
-     -1, 1, 1, 1, 1, 1, -1,
-     -1, -1, -1, -1, -1, -1, -1, ],
-
-    [-1 for i in range(49)]
+    picGenerator.generate_x(square_size),
+    picGenerator.generate_o(square_size),
+    picGenerator.generate_blank(square_size)
 ]
 
 
@@ -174,7 +190,7 @@ def get_winner(board):
 training_data = [np.array(d) for d in original_images][:n_train]
 weights = train(training_data, pixel_num)
 
-board = load_board("board.png")
+board = load_board("./board_test.png")
 new_board, board_results = predict_board_result(board, original_images, weights)
 
 fig, axs = plt.subplots(1, 2)

@@ -28,13 +28,13 @@ def generate_blank(n):
     return [-1]*n*n
 
 
-def brake_sign(m, k):
+def brake_sign(n, m, k):
     for _ in range(k):
         x = rd.randint(0, n-1)*n+rd.randint(0, n-1)
         m[x] = -m[x]
 
 
-def construct_board(n, temp=(('x','o','_'),('_','x','o'),('_','o','x'))):
+def construct_board(n, broken=True, temp=(('x','o','_'),('_','x','o'),('_','o','x'))):
     board = [-1]*(3*n+2)*(3*n+2)
     for i in range(3*n+2):
         board[(3*n+2)*i+n] = 1
@@ -49,7 +49,8 @@ def construct_board(n, temp=(('x','o','_'),('_','x','o'),('_','o','x'))):
                 field = generate_o(n)
             else:
                 field = generate_blank(n)
-            brake_sign(field, n//2)
+            if broken:
+                brake_sign(n, field, n//2)
             for x in range(n):
                 for y in range(n):
                     board[(n*i+i+x)*(3*n+2)+n*j+j+y] = field[x*n+y]
@@ -64,7 +65,7 @@ def save_image(filename, image):
     image_out.save(filename)
 
 
-n = 27
+n = 21
 b = construct_board(n)
 
 save_image("./x.png", np.array(list(map(lambda x: ((1+x)//2*255, (1+x)//2*255, (1+x)//2*255), generate_x(n))), dtype="i,i,i").astype(object).reshape((n, n)))
