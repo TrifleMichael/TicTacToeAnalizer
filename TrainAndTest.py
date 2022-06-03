@@ -5,32 +5,22 @@ from PIL import Image
 import picGenerator
 # Hopfield networks can hold about 0.138 \* n_neurons for better denoising <br>
 # 0.138 \* n_neurons = 0.138 \* 25 = 3.45 ~ 3 <br>
-square_size = 15
-# n_train = 7  # maybe more training better - Michal?
-n_test = 100
 
-# no of images to show in output plot
-n_train_disp = 8
-retrieve_steps = 10
-# template = [
-#     ['o','_','x'],
-#     ['_','o','x'],
-#     ['_','x','o']
+# square_size = 7
+# n_test = 100
+# n_train_disp = 8
+# retrieve_steps = 10
+#
+#
+# pixel_num = square_size * square_size
+# board_size = 3 * square_size + 2
+# n_train = int(board_size*board_size*0.138)
+#
+# original_images = [
+#     picGenerator.generate_x(square_size),
+#     picGenerator.generate_o(square_size),
+#     picGenerator.generate_blank(square_size)
 # ]
-# b = picGenerator.construct_board(square_size, broken=True, temp=template, alpha=0.3) #alpha <- [-1,1]
-# picGenerator.save_image("./board_test.png", np.array(list(map(lambda x: ((1+x)//2*255, (1+x)//2*255, (1+x)//2*255), b)),
-#                                                      dtype="i,i,i").astype(object).reshape((3*square_size+2,
-#                                                                                             3*square_size+2)))
-
-pixel_num = square_size * square_size
-board_size = 3 * square_size + 2
-n_train = int(board_size*board_size*0.138)
-
-original_images = [
-    picGenerator.generate_x(square_size),
-    picGenerator.generate_o(square_size),
-    picGenerator.generate_blank(square_size)
-]
 
 
 def distort(arr, distortionPercent, maxDistortions=9):
@@ -167,7 +157,8 @@ def get_winner(board):
 
 def check_with_temp(template, board):
     d = {'x': 0, 'o': 1, '_': 2}
-    return board == list(map(lambda row: list(map(lambda x: d[x], row)), template))
+    template = list(map(lambda row: list(map(lambda x: d[x], row)), template))
+    return sum(board[i][j] == template[i][j] for i in range(3) for j in range(3))/9
 
 
 def generate_temp():
@@ -175,13 +166,13 @@ def generate_temp():
 
 
 def test_predicted_result():
-    # template = [
-    #     ['o', '_', 'x'],
-    #     ['_', 'o', 'x'],
-    #     ['_', 'x', 'o']
-    # ]
+    template = [
+        ['o', '_', 'x'],
+        ['_', 'o', 'x'],
+        ['_', 'x', 'o']
+    ]
     template = generate_temp()
-    b = picGenerator.construct_board(square_size, broken=True, temp=template, alpha=0.3)  # alpha <- [-1,1]
+    b = picGenerator.construct_board(square_size, broken=False, temp=template, alpha=0.4)  # alpha <- [-1,1]
     picGenerator.save_image("./board_test.png", np.array(
         list(map(lambda x: ((1 + x) // 2 * 255, (1 + x) // 2 * 255, (1 + x) // 2 * 255), b)),
         dtype="i,i,i").astype(object).reshape((3 * square_size + 2,
@@ -199,10 +190,41 @@ def test_predicted_result():
 
 
 # Train
-training_data = [np.array(d) for d in original_images][:n_train]
-weights = train(training_data, pixel_num)
-test_num = 30
-print(f"accuracy: {sum(test_predicted_result() for _ in range(test_num))/test_num*100}%")
+start_size = 7
+end_size = 15
+x = [0] * (end_size - start_size + 1)
+y = [0] * (end_size - start_size + 1)
+for square_size in range(start_size, end_size+1):
+# square_size = 7
+    n_test = 100
+    n_train_disp = 8
+    retrieve_steps = 10
+
+
+    pixel_num = square_size * square_size
+    board_size = 3 * square_size + 2
+    n_train = int(board_size*board_size*0.138)
+
+    original_images = [
+        picGenerator.generate_x(square_size),
+        picGenerator.generate_o(square_size),
+        picGenerator.generate_blank(square_size)
+    ]
+
+    training_data = [np.array(d) for d in original_images][:n_train]
+    weights = train(training_data, pixel_num)
+    test_num = 10
+    accuracy = sum(test_predicted_result() for _ in range(test_num))/test_num*100
+    print(f"square size: {square_size} accuracy: {accuracy}%")
+    x[square_size-start_size] = square_size
+    y[square_size-start_size] = accuracy
+
+# fig, axs = plt.subplots(1, 1)
+# axs.set_title("thickness auto adjusting to size")
+# plt.plot(x, y)
+# plt.show()
+
+
 
 # board = load_board("./board_test.png")
 # new_board, board_results = predict_board_result(board, original_images, weights)

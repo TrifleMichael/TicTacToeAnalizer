@@ -2,26 +2,32 @@ from PIL import Image
 import random as rd
 import numpy as np
 
+# t = 1
 
 def generate_x(n):
-    offset = 1 # max(1, n//5)
+    offset = 1
+    thicc = max(2, n//5)
+    # thicc = t
     x = [-1]*n*n
     for i in range(n):
         if offset <= i <= n-1-offset:
             x[i*n+i] = 1
             x[(n-1-i)*n+i] = 1
-            if i != n-1-offset:
-                x[(i + 1) * n + i] = 1
-                x[i * n + i + 1] = 1
-            if i != offset:
-                x[(n - i) * n + i] = 1
-                x[(n - 1 - i) * n + i - 1] = 1
+            for j in range(thicc):
+                if i < n-1-offset-j+1:
+                    x[(i + j) * n + i] = 1
+                    x[i * n + i + j] = 1
+                if i > offset+j-1:
+                    x[(n - 1 - (i-j)) * n + i] = 1
+                    x[(n - 1 - i) * n + i - j] = 1
     return x
 
 
 def generate_o(n):
     o = [-1]*n*n
-    for offset in range(1, max(2, n//5)):
+    s = max(2, n//5)
+    # s = t+1
+    for offset in range(1, s):
         for i in range(offset, n-offset):
             o[i*n+offset] = 1
             o[i*n+n-offset-1] = 1
